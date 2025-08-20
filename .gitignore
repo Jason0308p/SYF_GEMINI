@@ -1,0 +1,7 @@
+    1         # Python virtual environment
+    2         venv/
+    3         __pycache__/
+    4
+    5         # IDE and editor files
+    6         .vscode/
+    7         .idea/
