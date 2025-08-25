@@ -124,6 +124,6 @@ final_columns = [col for col in columns_to_keep if col in df.columns]
 output_df = df[final_columns]
 
 # Save the final dataframe to the output file
-output_df.to_excel(r'C:\Users\syf\Desktop\my_Gemini_project\output4.xlsx', index=False)
+output_df.to_excel(r'C:\Users\syf\Desktop\my_Gemini_project\output5.xlsx', index=False)
 
-print("檔案處理完成，已更新 '新站商品詳述' 欄位並儲存至 output4.xlsx")
+print("檔案處理完成，已更新 '新站商品詳述' 欄位並儲存至 output5.xlsx")
