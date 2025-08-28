@@ -95,7 +95,7 @@ def extract_precise_specs(description: str) -> str:
         r'豪華|堅固|耐磨損|耐磨耗|專為|專用|專業版|專業設計|專業品質|專業技術|專業工藝|專業製造|'
         r'創意|小巧|輕便|便捷|易用|輕鬆|讓你|讓您|柔軟|觸感|有效|個性|效果|保溫|保冷|保護|防護|'
         r'防滑|防震|防摔|防爆|防火|防盜|廣告|簡易|持久|替換|簡約|大方|可供選擇|一次|滿足|'
-        r'可調整|可調節|可擴展|可擴充|採用|效益|附加價值|價值|符合|趨勢|容納|容量|可容納|各式物品|可放置|放置|適中|便於|即時|及時)'
+        r'可調整|可調節|可擴展|可擴充|採用|效益|附加價值|價值|符合|趨勢|容納|可容納|各式物品|可放置|放置|適中|便於|即時|及時)'
     )
 
     for line in lines:
@@ -212,6 +212,6 @@ print(output_df.head(3).to_string(index=False))
 print("--- DEBUG END ---")
 
 # ---------- 存檔 ----------
-out_path = r'C:\Users\syf\Desktop\my_Gemini_project\更細規格01_完成版.xlsx'
+out_path = r'C:\Users\syf\Desktop\my_Gemini_project\更細規格_0826.xlsx'
 output_df.to_excel(out_path, index=False)
 print(f"檔案處理完成，已輸出：{out_path}")
