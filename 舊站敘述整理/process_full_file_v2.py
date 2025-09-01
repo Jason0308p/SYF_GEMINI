@@ -110,9 +110,10 @@ def transform_description(description):
 # ***************
 #     主程式 
 # ***************
+
 input_filename = "C:\\Users\\syf\\Desktop\\my_Gemini_project\\舊站敘述整理\\0825舊站產品資料0804.xlsx"
 J2_input = "C:\\Users\\syf\\Desktop\\my_Gemini_project\\舊站敘述整理\\J2產品20250828.xlsx"
-output_filename = '舊站描整理成新規格_0829初版.xlsx'
+output_filename = '舊站描整理成新規格_0901初版.xlsx'
 
 print(f"正在讀取檔案: {input_filename}")
 try:
@@ -121,8 +122,17 @@ try:
     print("正在使用強化版腳本處理所有資料...")
     
 
-    # 先把不符合的資料刪除
-    df = df[df['goods_sn'].str.len() == 9]  # 例如 54AA-0000     
+    # 先把不符合的資料刪除，保留正確格式的編號，如 54AA-0000
+    df = df[df['goods_sn'].str.len() == 9] 
+
+    # 排除掉特定編號
+    df = df[~df['goods_sn'].str[:4].isin(['74EA', '73AA','73ZA','73BA','73PA'])]
+
+    # isin 與 in 差別
+    # isin 是用來檢查 Series 中的每個元素是否在給定的列表中，而 in 是用來檢查單一元素是否在列表中
+    # 例如：df['產品編號'].str[:4].isin(['74EA', '54AA']) 會返回一個布林值的 Series
+    # 而 '74EA' in df['產品編號'].str[:4].values 會返回一個單一的布林值
+
     # 處理 goods_brief
     df['新規格_brief'] = df['goods_brief'].apply(transform_description)
     # 處理 goods_desc
@@ -136,30 +146,45 @@ try:
     # 刪除 brief 和 desc 皆為空的數據
     df = df[(df['判斷欄位1'] != 0) | (df['判斷欄位2'] != 0)]
 
-    # 輸出結果，包含 brief 和 desc 的原始及處理後欄位，並加入新欄位
-    output_df = df[['goods_sn', 'goods_brief', '新規格_brief', '判斷欄位1', 'goods_desc', '新規格_desc', '判斷欄位2']]
-    output_df.to_excel(output_filename, index=False)
 
     df2 = df.copy()
     df2['新規格_舊站部分'] = np.where((df2['判斷欄位1']== 0) & (df2['判斷欄位2'] == 1), df2['新規格_desc'], df2['新規格_brief'])
     
     # 處理J2新站描述，並且加入html格式
-    df_J2['新規格_新站部分'] = df_J2['ai_goods_description']
+    # 如果 新站商品詳述 欄位開頭出現9碼數字，如113070180，則刪除這九碼
+    df_J2['新站商品詳述'] = df_J2['新站商品詳述'].str.replace(r'^\d{9}', '', regex=True)
+    df_J2['新規格_新站部分'] = df_J2['新站商品詳述']
     
     # 依照產品編號合併兩個DataFrame
     merged_df = pd.merge(df_J2,df2,left_on='產品編號',right_on='goods_sn', how='left')
 
     # 然後合併新舊規格
-    merged_df['最終規格與描述'] =   merged_df['新規格_舊站部分']  + merged_df['新規格_新站部分']
-    merged_df = merged_df[['產品編號','最終規格與描述','实例ID']]
+    merged_df['最終規格與描述'] =   merged_df['新規格_舊站部分']  +'<br>' +  merged_df['新規格_新站部分']
+    merged_df['產品規格_備份AI敘述'] = merged_df['新規格_新站部分']
+    # 把更新狀態的欄位 全部都預設'產品更新核可'
+    merged_df['新站上架後資更新態'] = merged_df['新站上架後資更新態'].apply( lambda x:'產品更新核可') 
+    merged_df = merged_df[['產品編號','最終規格與描述','產品規格_備份AI敘述','新站上架後資更新態','实例ID']]
 
     # 只保留有最終規格描述的資料，且排除na
     merged_df = merged_df[merged_df['最終規格與描述'].str.len() > 0]
 
-    # 輸出檔案
-    merged_df.to_excel('最終規格與描述_0829初版.xlsx', index=False)
+# ############
+#    輸出
+# ############
+    # 然後分成多個檔案輸出，每個excel檔案只能有4500筆資料
+    batch_size = 4500
+    # merged_df.to_excel('最終規格與描述_0901初版.xlsx', index=False)
+    # 然後批量輸出
+    for i in range(0, merged_df.shape[0], batch_size):
+        merged_df.iloc[i:i + batch_size].to_excel(f'0901_導入J2_{i // batch_size + 1}.xlsx', index=False)
+
+    # 輸出結果，包含 brief 和 desc 的原始及處理後欄位，並加入新欄位
+    output_df = df[['goods_sn', 'goods_brief', '新規格_brief', '判斷欄位1', 'goods_desc', '新規格_desc', '判斷欄位2']]
+    output_df.to_excel(output_filename, index=False)
 
     print(f"處理完成！已將結果儲存至新檔案: {output_filename}")
+
+
 except FileNotFoundError:
     print(f"錯誤：找不到檔案 '{input_filename}'。")
 except Exception as e:
