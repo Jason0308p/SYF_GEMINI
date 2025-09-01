@@ -8,7 +8,8 @@ def parse_specs(description):
     if not isinstance(description, str):
         return []
 
-    # 先將 <br> 轉換為換行符，以便後續處理
+    # 重要!!!
+    # 先將 <br> 轉換為換行符，以便後續處理 
     temp_description = re.sub('<br>', '\n', description)
     # 移除所有剩餘的HTML標籤
     clean_description = re.sub('<[^>]*>', '', temp_description)
@@ -67,7 +68,11 @@ def format_style_1(specs):
     }
     for spec in specs:
         key = spec['key']
+        if key in ['編號', '製作時間', '備註', '最低訂購數量','數製作時間','最低起訂量', '溫度','耐熱','產品說明','滑蓋','功能用途','洗滌說明']:
+            continue
         processed_value = process_value(key, spec['value'], 1)
+        # 沒有去除掉開頭的特殊符號
+        processed_value = re.sub(r'^[•@#$%^&*]+', '', processed_value)
         new_key = key_map.get(key, key)
         output.append(f"<li>{new_key}：{processed_value}</li>")
     return '<ul>\n' + '\n'.join(output) + '\n</ul>'
@@ -83,7 +88,13 @@ def format_style_2(specs):
     }
     for spec in specs:
         key = spec['key']
+        
+        # 跳過的關鍵字
+        if key in ['編號', '製作時間', '備註', '最低起訂量', '溫度','耐熱','產品說明','滑蓋','功能用途','說明']:
+            continue
         processed_value = process_value(key, spec['value'], 2)
+        processed_value = re.sub(r'^[•@#$%^&*]+', '', processed_value)
+
         new_key = key_map.get(key, key)
         output.append(f"<li>{new_key}：{processed_value}</li>")
     return '<ul>\n' + '\n'.join(output) + '\n</ul>'
@@ -96,15 +107,22 @@ def transform_description(description):
     chosen_style = random.choice(style_functions)
     return chosen_style(specs)
 
-# --- 主程式 ---
+# ***************
+#     主程式 
+# ***************
 input_filename = "C:\\Users\\syf\\Desktop\\my_Gemini_project\\舊站敘述整理\\0825舊站產品資料0804.xlsx"
-output_filename = '舊站描述整理成新規格_0828_3.xlsx'
+J2_input = "C:\\Users\\syf\\Desktop\\my_Gemini_project\\舊站敘述整理\\J2產品20250828.xlsx"
+output_filename = '舊站描整理成新規格_0829初版.xlsx'
 
 print(f"正在讀取檔案: {input_filename}")
 try:
     df = pd.read_excel(input_filename, dtype=str).fillna('')
+    df_J2 = pd.read_excel(J2_input, dtype=str).fillna('')
     print("正在使用強化版腳本處理所有資料...")
     
+
+    # 先把不符合的資料刪除
+    df = df[df['goods_sn'].str.len() == 9]  # 例如 54AA-0000     
     # 處理 goods_brief
     df['新規格_brief'] = df['goods_brief'].apply(transform_description)
     # 處理 goods_desc
@@ -121,7 +139,26 @@ try:
     # 輸出結果，包含 brief 和 desc 的原始及處理後欄位，並加入新欄位
     output_df = df[['goods_sn', 'goods_brief', '新規格_brief', '判斷欄位1', 'goods_desc', '新規格_desc', '判斷欄位2']]
     output_df.to_excel(output_filename, index=False)
+
+    df2 = df.copy()
+    df2['新規格_舊站部分'] = np.where((df2['判斷欄位1']== 0) & (df2['判斷欄位2'] == 1), df2['新規格_desc'], df2['新規格_brief'])
     
+    # 處理J2新站描述，並且加入html格式
+    df_J2['新規格_新站部分'] = df_J2['ai_goods_description']
+    
+    # 依照產品編號合併兩個DataFrame
+    merged_df = pd.merge(df_J2,df2,left_on='產品編號',right_on='goods_sn', how='left')
+
+    # 然後合併新舊規格
+    merged_df['最終規格與描述'] =   merged_df['新規格_舊站部分']  + merged_df['新規格_新站部分']
+    merged_df = merged_df[['產品編號','最終規格與描述','实例ID']]
+
+    # 只保留有最終規格描述的資料，且排除na
+    merged_df = merged_df[merged_df['最終規格與描述'].str.len() > 0]
+
+    # 輸出檔案
+    merged_df.to_excel('最終規格與描述_0829初版.xlsx', index=False)
+
     print(f"處理完成！已將結果儲存至新檔案: {output_filename}")
 except FileNotFoundError:
     print(f"錯誤：找不到檔案 '{input_filename}'。")
