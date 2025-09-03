@@ -109,11 +109,11 @@ columns_to_keep = [
     '產品編號'
 ]
 
-# 只保留存在的欄位
+# 只保留存在的欄位~
 final_columns = [col for col in columns_to_keep if col in df.columns]
 output_df = df[final_columns]
 
-# 儲存至 Excel
+# 儲存至 Excel~
 output_df.to_excel(r'C:\Users\syf\Desktop\my_Gemini_project\更細規格01.xlsx', index=False)
 
 print("檔案處理完成，已更新 '新站商品詳述' 欄位並儲存至 更細規格01.xlsx")

@@ -29,7 +29,7 @@ index_name = "syf-products-gemini-01"
 # --- 刪除舊索引以重建 ---
 # 檢查索引是否存在，如果存在，則刪除它以確保維度正確
 if index_name in pc.list_indexes().names():
-    print(f"偵測到舊索引 '{index_name}'，正在刪除以修正維度不符問題...")
+    print(f"偵測到舊索引 '{index_name}'，正在刪除以修正維度不符問題....")
     pc.delete_index(index_name)
     # 等待幾秒鐘，確保索引完全刪除
     time.sleep(5)
