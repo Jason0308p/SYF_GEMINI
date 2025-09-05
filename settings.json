@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "myServer": {
+      "command": "python",
+      "args": ["-m", "my_mcp_server", "--port", "8080"],
+      "cwd": "./mcp-servers/python",
+      "env": {
+        "API_KEY": "$EXTERNAL_API_KEY"
+      },
+      "timeout": 15000
+    }
+  }
+}
